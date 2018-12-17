@@ -1,12 +1,12 @@
 # Leveraging CVE-2018-19788 to dump protected files without root shell
 
-[CVE-2018-19788](https://gitlab.freedesktop.org/polkit/polkit/issues/74) is an issue where any user with a UID over MAX_INT (IE 4000000000) can run any systemctl command on a systemd linux box, such as Ubuntu. (There is already a writeup to gain a root shell found: [here](http://manivelsysad.blogspot.com/2018/12/low-privileged-user-with-uid-greater.html)). The main difference between this writeup and the full root shell writeup is that this will be run as the user itself instead of a root user (basically just a PoC to be honest)
+[CVE-2018-19788](https://gitlab.freedesktop.org/polkit/polkit/issues/74) is an issue where any user with a UID over INT_MAX (IE 4000000000) can run any systemctl command on a systemd linux box, such as Ubuntu. (There is already a writeup to gain a root shell found: [here](http://manivelsysad.blogspot.com/2018/12/low-privileged-user-with-uid-greater.html)). The main difference between this writeup and the full root shell writeup is that this will be run as the user itself instead of a root user (basically just a PoC to be honest)
 
 # Getting /etc/shadow without executing a root shell
 
 To get a root shell it's as simple as running `systemd-run -t /bin/bash` but if you want to keep off of the radar you can run simple commands to get privileged files without a terminal. Follow these steps to do it:
 
- - Add a user with a UID above MAX_INT:
+ - Add a user with a UID above INT_MAX:
    ```bash
    adduser --uid 4000000000 someusername
    ```
