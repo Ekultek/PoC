@@ -49,11 +49,14 @@ def read_results_file(path):
         return data.read()
 
 
-def send_command(command, res_file):
+def send_command(command, res_file, check=True):
     """
     send the command
     """
-    return subprocess.call(shlex.split(COMMAND_TEMPLATE.format(command, res_file)))
+    if not check:
+        return subprocess.call(shlex.split(COMMAND_TEMPLATE.format(command, res_file)))
+    else:
+        return subprocess.check_output(shlex.split(COMMAND_TEMPLATE.format(command, res_file)))
 
 
 def create_shell_interpreter():
@@ -61,13 +64,11 @@ def create_shell_interpreter():
     create the shell
     """
     while True:
-        command = raw_input("> ")
+        command = raw_input("\n\n> ")
         res_file_name = results_filename()
-        print("-" * 30)
         send_command(command, res_file_name)
         time.sleep(3)
-        print("\n>> {}".format(open(res_file_name).read()))
-        print("-" * 30)
+        print("\nOUTPUT:\n{}".format(open(res_file_name).read()))
 
 
 def main():
@@ -75,12 +76,13 @@ def main():
     main function
     """
     try:
-        print("testing")
         results_file = results_filename()
         command = "echo"
-        send_command(command, results_file)
-        print("launching shell")
-        create_shell_interpreter()
+        output = send_command(command, results_file, check=True)
+        if "access denied" not in output.lower():
+            create_shell_interpreter()
+        else:
+            raise Exception("access denied")
     except KeyboardInterrupt:
         print("user quit")
         clean_temp_files()
