@@ -40,7 +40,7 @@ def check_for_uid(file_path):
                 splitter = line.split(":")
                 uid = splitter[2]
                 try:
-                    if int(uid) >= max_int:
+                    if int(uid) > max_int:
                         retval.append(line.strip())
                 except:
                     pass
