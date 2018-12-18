@@ -7,13 +7,17 @@ def check_for_write(file_path):
     """
     check if we have write access to the file
     """
-    return os.access(file_path, os.R_OK)
+    if os.access(file_path, os.R_OK):
+        return True
+    return False
 
 
 def check_versions():
     """
     check the systemctl version and the polykit version
     """
+    # these are the versions that where firstly reported
+    # so we'll go with these and below
     max_version_ctl = "239"
     max_version_poly = "115"
     data_ctl = subprocess.check_output(["systemctl", "--version"])
@@ -31,8 +35,12 @@ def check_versions():
 
 
 def check_for_uid(file_path):
+    """
+    check to see if there are any users that are already compromised
+    """
     retval = []
-    max_int = 294967296
+    # trial and error is a pain in the ass
+    max_int = 2999999999
     searcher = re.compile(r"\b(\d+)\b")
     with open(file_path) as data:
         for line in data.readlines():
@@ -40,36 +48,39 @@ def check_for_uid(file_path):
                 splitter = line.split(":")
                 uid = splitter[2]
                 try:
-                    if int(uid) > max_int:
+                    if int(uid) > int(max_int):
                         retval.append(line.strip())
                 except:
                     pass
     if len(retval) != 0:
         return retval
-    else:
-        return None
+    return None
 
 
 def main():
+    """
+    main function
+    """
     file_path = "/etc/passwd"
 
-    if check_versions():
-        print("[+] version number is within attack scope")
-        write_access = check_for_write(file_path)
-        if write_access:
-            print("[+] it appears that there is write access to '/etc/passwd'")
-            possible_compromises = check_for_uid(file_path)
-            if possible_compromises is not None:
-                print("[+] there is a total of {} possible compromised user(s):".format(len(possible_compromises)))
-                for item in possible_compromises:
-                    print(item)
-            else:
-                print("[-] no users are compromised at this time")
-                print("[+] the system is vulnerable and you have the ability to manually create a user")
-        else:
-            print("[x] there is no write access to /etc/passwd, not possible to manually create a compromised user")
+    version_in_target_scope = check_versions()
+    write_access_to_file = check_for_write(file_path)
+    possible_compromises = check_for_uid(file_path)
+
+    if write_access_to_file:
+        print("[+] you have write access to {}".format(file_path))
     else:
-        print("[x] version appears to be patched against attack")
+        print("[x] you do not have write access to {}".format(file_path))
+    if version_in_target_scope:
+        print("[+] versions appear to be within the vulnerable version scope")
+    else:
+        print("[x] versions are not in the vulnerable version scope")
+    if possible_compromises is not None and version_in_target_scope:
+        print("[+] total of {} possibly compromised user account(s)".format(len(possible_compromises)))
+        for user in possible_compromises:
+            print(user)
+    else:
+        print("[x] no compromised accounts created")
 
 
 if __name__ == "__main__":
